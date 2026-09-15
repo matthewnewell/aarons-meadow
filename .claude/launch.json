@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Aaron's Meadow Backend",
+      "runtimeExecutable": "backend/.venv/bin/python",
+      "runtimeArgs": ["app.py"],
+      "cwd": "/home/matthew/aarons-meadow/backend",
+      "port": 8101
+    },
+    {
+      "name": "Aaron's Meadow Frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--host", "0.0.0.0"],
+      "cwd": "/home/matthew/aarons-meadow/frontend",
+      "port": 5187
+    }
+  ]
+}
