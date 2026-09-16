@@ -48,10 +48,9 @@ export default function SplashPage() {
           <section className="splash-note">
             <p>
               A spec moves from <strong>Draft</strong> (still being interviewed) to{' '}
-              <strong>In Review</strong> to <strong>Published</strong> — only a published spec
-              shows up in Conway's Depot's own catalog, registered automatically the moment it
-              publishes. The workbench, where drafts and in-review specs live, is yours alone;
-              the Depot never sees anything short of finished.
+              <strong>In Review</strong> to <strong>Published</strong> — every stage lives right
+              here on the workbench, a draft only you can see becoming a finished spec anyone
+              with the link can read. Publishing doesn't send it anywhere; it just marks it done.
             </p>
           </section>
         </div>

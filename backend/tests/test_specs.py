@@ -97,6 +97,29 @@ def test_full_lifecycle_to_submit(client):
     assert res.get_json()["status"] == "in_review"
 
 
+def test_publish_stays_in_the_meadow(client):
+    """in_review -> published shouldn't touch the Depot at all anymore — no network call to
+    fail/succeed, just a status flip. Regression test for the "stopped registering a separate
+    Depot Application per spec" fix."""
+    created = client.post("/api/specs", json={}).get_json()
+    spec_id = created["id"]
+    client.put(f"/api/specs/{spec_id}/conformance", json={
+        "declared_scope": "general", "consumes": "", "emits": "nothing",
+    })
+    with client.application.app_context():
+        from models import Spec
+        s = Spec.query.get(spec_id)
+        s.title = "Test App"
+        db.session.commit()
+    client.post(f"/api/specs/{spec_id}/submit-for-review")
+
+    res = client.post(f"/api/specs/{spec_id}/publish")
+    assert res.status_code == 200
+    spec = res.get_json()
+    assert spec["status"] == "published"
+    assert "depot_application_id" not in spec
+
+
 def test_delete_blocked_once_published(client):
     created = client.post("/api/specs", json={}).get_json()
     spec_id = created["id"]

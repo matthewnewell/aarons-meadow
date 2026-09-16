@@ -2,13 +2,15 @@
 Aaron's Meadow: a place non-programmers go to work out what they actually want to build. The
 interview assembles a `Spec` — structured enough that a developer can build from it, produced
 entirely through conversation, never generated code. See depot_client.py for the one place this
-app talks to Conway's Depot (registering a spec once it's published) — everywhere else it's
-fully standalone, same "a link is a pointer, never a live integration" rule every sibling app
-runs on, just applied to a one-time write instead of a stored pointer.
+app talks to Conway's Depot (resolving a display name for whoever's using it) — everywhere else
+it's fully standalone.
 
-The workbench lifecycle — draft -> in_review -> published — is owned entirely here; the Depot
-only ever sees `published` (a single Application row created at that moment). No auth: like
-every other app's journal, "who" is a free-text name the browser remembers, not a real account.
+The workbench lifecycle — draft -> in_review -> published — is owned entirely here, and stays
+here: a published spec doesn't spin off a Depot Application of its own, it's just a page on this
+app's own workbench (`/specs/<id>`) — a plain URL is the whole mechanism if a Depot project ever
+wants to point at one specific spec, same "a link is a pointer, never a new catalog entry"
+convention every sibling app already runs on for its own cross-references. No auth: like every
+other app's journal, "who" is a free-text name the browser remembers, not a real account.
 """
 
 import json
@@ -25,9 +27,9 @@ STATUSES = ("draft", "in_review", "published")
 
 # The conformance contract's own 3-way declaration — deliberately not Conway's Depot's real
 # two-tier scope+category taxonomy (project|organizational scope, five 15288-derived
-# categories). Keeping this thin, as asked: one flat choice, mapped onto the Depot's richer
-# fields only at publish time (see routes/specs.py's _DEPOT_MAPPING) — a spec author never has
-# to learn 15288 process groups to describe what they're proposing.
+# categories). Keeping this thin, as asked: one flat choice a spec author can make without
+# having to learn 15288 process groups — informs whoever eventually builds this, never sent
+# anywhere (see this module's own docstring on why a published spec stays here, not the Depot).
 DECLARED_SCOPES = ("project", "organizational", "general")
 
 
@@ -68,11 +70,6 @@ class Spec(db.Model):
     consumes = db.Column(db.Text, nullable=True)  # what it reads from the digital thread
     emits = db.Column(db.Text, nullable=True)  # what it writes back — "nothing" is a fine answer
 
-    # Set once publish actually registers the spec in the Depot's own catalog — see
-    # depot_client.register_application. Null if that call failed; the spec is still
-    # `published` either way, since the spec itself is the real artifact.
-    depot_application_id = db.Column(db.String(36), nullable=True)
-
     @property
     def message_list(self) -> list[dict]:
         return json.loads(self.messages) if self.messages else []
@@ -100,5 +97,4 @@ class Spec(db.Model):
             "declared_scope": self.declared_scope,
             "consumes": self.consumes,
             "emits": self.emits,
-            "depot_application_id": self.depot_application_id,
         }

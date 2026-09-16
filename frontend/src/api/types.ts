@@ -36,5 +36,4 @@ export interface Spec {
   declared_scope: DeclaredScope | null
   consumes: string | null
   emits: string | null
-  depot_application_id: string | null
 }

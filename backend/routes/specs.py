@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify, request
 
 import ai_client
-import depot_client
 from db import db
-from models import DECLARED_SCOPES, STATUSES, Spec
+from models import DECLARED_SCOPES, Spec
 
 bp = Blueprint("specs", __name__, url_prefix="/api/specs")
 
@@ -79,7 +78,7 @@ def get_spec(spec_id):
 def delete_spec(spec_id):
     spec = Spec.query.get_or_404(spec_id)
     if spec.status == "published":
-        return jsonify({"error": "a published spec can't be deleted here — it's registered in the Depot's own catalog now"}), 400
+        return jsonify({"error": "a published spec can't be deleted here — it's a finished artifact now"}), 400
     db.session.delete(spec)
     db.session.commit()
     return "", 204
@@ -188,17 +187,6 @@ def submit_for_review(spec_id):
     return jsonify(spec.to_dict())
 
 
-# Depot's own scope is (project|organizational); category is one of five 15288-derived aisles.
-# Aaron's Meadow's own thin 3-way declaration maps onto that richer pair only here, at the one
-# moment a spec actually needs to speak the Depot's language — see models.py's own note on why
-# the interview itself never has to teach 15288.
-_DEPOT_MAPPING = {
-    "project": ("project", "project"),
-    "organizational": ("organizational", "enterprise"),
-    "general": ("organizational", "general"),
-}
-
-
 def _human_review_gate(spec: Spec) -> bool:
     """The second half of the review gate — stubbed on purpose, per the user's own call (no
     Scan Me integration for this MVP either; a documentation artifact has no repo for Scan Me
@@ -209,32 +197,16 @@ def _human_review_gate(spec: Spec) -> bool:
 
 @bp.post("/<spec_id>/publish")
 def publish(spec_id):
-    """in_review -> published, and — the actual point — registers the spec as a real Depot
-    catalog entry. The spec stays `published` even if that registration call fails (the spec
-    itself is the real artifact; the Depot listing is a courtesy) — depot_application_id is
-    just null in that case, visible on the record for whoever notices and wants to retry."""
+    """in_review -> published. Stays right here on this app's own workbench, not a new Depot
+    catalog entry — see models.py's own docstring for why: a published spec's `/specs/<id>` page
+    is already the pointer anything that wants to reference it needs, same "plain link, not a
+    live registration" convention every sibling app's own cross-references use."""
     spec = Spec.query.get_or_404(spec_id)
     if spec.status != "in_review":
         return jsonify({"error": "only a spec already in review can be published"}), 400
     if not _human_review_gate(spec):
         return jsonify({"error": "did not pass review"}), 400
 
-    depot_scope, depot_category = _DEPOT_MAPPING[spec.declared_scope]
-    description_parts = [spec.problem_statement or ""]
-    if spec.who_its_for:
-        description_parts.append(f"For: {spec.who_its_for}")
-    description = " — ".join(p for p in description_parts if p) or "A spec from Aaron's Meadow — no working app yet, see the spec itself."
-
     spec.status = "published"
-    app_row = depot_client.register_application(
-        name=spec.title,
-        description=description,
-        scope=depot_scope,
-        category=depot_category,
-        url=f"{depot_client.MEADOW_FRONTEND_URL}/specs/{spec.id}",
-    )
-    if app_row:
-        spec.depot_application_id = app_row["id"]
-
     db.session.commit()
     return jsonify(spec.to_dict())

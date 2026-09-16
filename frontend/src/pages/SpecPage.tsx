@@ -13,8 +13,9 @@ import './SpecPage.css'
 
 /** The core screen — the interview on one side, the spec assembling itself on the other. A
  * draft is fully interactive (chat + editable conformance answers); in_review/published render
- * read-only, since the interview is over — this same page IS the read-only "product page" a
- * published spec's Depot Application.url points at (see backend routes/specs.py's publish). */
+ * read-only, since the interview is over. A published spec stays right here — this page is its
+ * permanent home, not a stand-in for a separate Depot catalog entry (see backend models.py's
+ * own docstring for why publishing doesn't create one). */
 export default function SpecPage() {
   const { specId } = useParams<{ specId: string }>()
   const { data: spec, isLoading } = useSpec(specId)
@@ -116,7 +117,7 @@ export default function SpecPage() {
           )}
 
           <div className="spec-page__conformance">
-            <h3 className="spec-page__conformance-title">Before it can join the Depot</h3>
+            <h3 className="spec-page__conformance-title">Conformance contract</h3>
             <label className="spec-page__conformance-field">
               <span>Who's this for?</span>
               <select
@@ -162,19 +163,13 @@ export default function SpecPage() {
             )}
             {spec.status === 'in_review' && (
               <button className="am-btn am-btn--primary" onClick={() => publish.mutate()} disabled={publish.isPending}>
-                Publish to the Depot
+                Publish
               </button>
             )}
             {submitForReview.isError && (
               <p className="spec-page__action-error">{(submitForReview.error as Error).message}</p>
             )}
           </div>
-
-          {spec.status === 'published' && spec.depot_application_id && (
-            <p className="spec-page__published-note">
-              Registered in Conway's Depot's catalog.
-            </p>
-          )}
         </section>
       </div>
     </div>

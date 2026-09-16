@@ -29,16 +29,16 @@ processes is worse than an empty one.
 draft ──> in_review ──> published
 ```
 
-Aaron's Meadow owns this whole lifecycle — Conway's Depot only ever sees `published`. The
-**workbench** (drafts and in-review specs) is distinct from "my apps" in the Depot, which are
-apps you *use*, not ones still being worked out.
+Aaron's Meadow owns this whole lifecycle, and it stays here — a published spec is a page on this
+app's own workbench (`/specs/<id>`), never a new entry in Conway's Depot's own catalog. The
+**workbench** (all three states) is distinct from "my apps" in the Depot, which are apps you
+*use*, not specs still being worked out — and distinct, too, from the meadow itself, which *is*
+one of those apps (pinned to the Depot's Launchpad like any other).
 
-Publishing registers the spec as a real Application in the Depot's own catalog — scope and
-category mapped from the spec's own thin 3-way declaration (`project` / `organizational` /
-`general`) onto the Depot's richer two-tier taxonomy, so an author never has to learn 15288
-process groups to describe what they're proposing (see `backend/routes/specs.py`'s
-`_DEPOT_MAPPING`). The registered `url` points at the spec's own read-only page here — there's
-no running product yet, so there's nothing else for it to point at.
+Publishing just marks a spec done: nothing gets registered anywhere. If a Depot project ever
+wants to point at one specific published spec, that's a plain link — the same "a link is a
+pointer, never a live integration" convention every sibling app already uses for its own
+cross-references, not a whole second catalog listing per spec.
 
 ## Review gate
 
@@ -84,8 +84,10 @@ npm install
 npm run dev                      # :5187, proxies /api to :8101
 ```
 
-Fully standalone day to day — unlike Task Master, nothing here needs the Depot live except the
-one moment someone clicks Publish (`DEPOT_API_URL`, default `http://localhost:8090`).
+Fully standalone — publishing never touches the Depot at all. The one soft dependency: launched
+from the Depot's own Launchpad, the URL carries `?person_id=`, and a new spec's author is
+resolved from that (`DEPOT_API_URL`, default `http://localhost:8090`) instead of typed by hand;
+opened directly with no such link, a spec just creates with no author.
 
 ## AI (optional)
 

@@ -9,8 +9,8 @@ import './WorkbenchPage.css'
 const SECTIONS: SpecStatus[] = ['draft', 'in_review', 'published']
 
 /** The workbench — every spec you're working on, distinct from "my apps" in the Depot, which
- * are apps you *use*. Only a published spec ever leaves here for the Depot's own catalog; a
- * draft or in-review one exists only on this page.
+ * are apps you *use*. All three states live right here, permanently — even a published spec
+ * stays on this page (see its own SECTIONS below); it's just done, not gone.
  *
  * Authorship is picked up automatically, never typed in: a Launchpad "launch this app" link
  * carries `?person_id=` (same passthrough Task Master's own board uses), resolved here to a
