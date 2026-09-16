@@ -1,26 +1,39 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useCreateSpec, useSpecs } from '../api/hooks'
+import { usePersonName, useCreateSpec, useSpecs } from '../api/hooks'
 import type { Spec, SpecStatus } from '../api/types'
 import { STATUS_LABEL } from '../api/types'
-import { getAuthor, relativeTime, setAuthor } from '../lib/author'
+import { getAuthor, readUrlPersonId, relativeTime, setAuthor } from '../lib/author'
 import './WorkbenchPage.css'
 
 const SECTIONS: SpecStatus[] = ['draft', 'in_review', 'published']
 
 /** The workbench — every spec you're working on, distinct from "my apps" in the Depot, which
  * are apps you *use*. Only a published spec ever leaves here for the Depot's own catalog; a
- * draft or in-review one exists only on this page. */
+ * draft or in-review one exists only on this page.
+ *
+ * Authorship is picked up automatically, never typed in: a Launchpad "launch this app" link
+ * carries `?person_id=` (same passthrough Task Master's own board uses), resolved here to a
+ * real name via usePersonName and remembered (lib/author.ts) so it survives after the query
+ * param is gone. Opened standalone with no persona to resolve, a spec just creates with no
+ * author — same "no fake precision" restraint as everywhere else in this ecosystem, not a
+ * fallback text field. */
 export default function WorkbenchPage() {
   const { data: specs, isLoading } = useSpecs()
   const navigate = useNavigate()
   const createSpec = useCreateSpec()
-  const [authorInput, setAuthorInput] = useState(getAuthor())
+
+  const urlPersonId = readUrlPersonId()
+  const { data: personResult } = usePersonName(urlPersonId)
+  useEffect(() => {
+    if (personResult?.found && personResult.name) setAuthor(personResult.name)
+  }, [personResult])
+
+  const author = (personResult?.found && personResult.name) || getAuthor()
 
   function newSpec() {
-    setAuthor(authorInput)
     createSpec.mutate(
-      { created_by: authorInput.trim() || undefined },
+      { created_by: author || undefined },
       { onSuccess: (spec) => navigate(`/specs/${spec.id}`) },
     )
   }
@@ -33,12 +46,7 @@ export default function WorkbenchPage() {
       <div className="workbench-page__toolbar">
         <h1 className="workbench-page__title">Your workbench</h1>
         <div className="workbench-page__new">
-          <input
-            className="workbench-page__author"
-            placeholder="Your name (optional)"
-            value={authorInput}
-            onChange={(e) => setAuthorInput(e.target.value)}
-          />
+          {author && <span className="workbench-page__as">as {author}</span>}
           <button className="am-btn am-btn--primary" onClick={newSpec} disabled={createSpec.isPending}>
             + New spec
           </button>

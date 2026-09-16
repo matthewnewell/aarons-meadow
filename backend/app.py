@@ -3,6 +3,7 @@ import os
 from flask import Flask, send_from_directory
 
 from db import init_db
+from routes.people import bp as people_bp
 from routes.specs import bp as specs_bp
 from seed import seed_if_empty
 
@@ -15,6 +16,7 @@ def create_app():
 
     init_db(app)
     app.register_blueprint(specs_bp)
+    app.register_blueprint(people_bp)
 
     with app.app_context():
         seed_if_empty()

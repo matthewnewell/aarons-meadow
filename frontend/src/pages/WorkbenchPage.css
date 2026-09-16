@@ -21,20 +21,13 @@
 
 .workbench-page__new {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
-.workbench-page__author {
-  padding: 8px 10px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
+.workbench-page__as {
   font-size: 0.82rem;
-  width: 160px;
-}
-
-.workbench-page__author:focus {
-  outline: none;
-  border-color: var(--color-accent);
+  color: var(--color-text-faint);
 }
 
 .workbench-page__loading {

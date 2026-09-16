@@ -1,5 +1,8 @@
-// No auth here, same as every sibling app's journal — "who" is just a name the browser
-// remembers. Ported from Value Stream's / WinMax's lib/journal.ts.
+// No auth here, same as every sibling app's journal — "who" is just a name. Two sources, in
+// order of preference: the Depot persona a "?person_id=" query param points at (see
+// hooks.ts's usePersonName — resolved once, remembered here so it survives client-side
+// navigation and future visits) and, failing that, whatever name was remembered last time.
+// Ported from Value Stream's / WinMax's lib/journal.ts, extended with the persona lookup.
 
 const AUTHOR_KEY = 'am:author'
 
@@ -17,6 +20,17 @@ export function setAuthor(name: string): void {
     if (trimmed) localStorage.setItem(AUTHOR_KEY, trimmed)
   } catch {
     // private window / storage blocked — specs just get created without an author
+  }
+}
+
+/** The `?person_id=` a Launchpad "launch this app" link carries (see conways-depot's
+ * LaunchpadPage.tsx) — read once per page load, same pattern as Task Master's own
+ * readUrlPersonId. `null` when opened standalone (bookmarked, typed in directly). */
+export function readUrlPersonId(): string | null {
+  try {
+    return new URLSearchParams(window.location.search).get('person_id')
+  } catch {
+    return null
   }
 }
 

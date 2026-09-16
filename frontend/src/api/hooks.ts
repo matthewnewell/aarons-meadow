@@ -2,6 +2,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { DeclaredScope, Spec } from './types'
 
+/** Resolves the `?person_id=` the Launchpad's "launch this app" link carries (see
+ * conways-depot's LaunchpadPage.tsx) to a display name, so a new spec's author fills in on its
+ * own — see lib/person.ts for where this actually gets used. `enabled: !!personId` short-
+ * circuits when there's nothing to resolve (opened standalone, no query param). */
+export function usePersonName(personId: string | null) {
+  return useQuery({
+    queryKey: ['people', personId],
+    queryFn: () => api.get<{ found: boolean; name: string | null }>(`/people/${personId}`),
+    enabled: !!personId,
+    staleTime: Infinity, // a persona's name isn't going to change mid-session
+    retry: false,
+  })
+}
+
 export function useSpecs() {
   return useQuery({
     queryKey: ['specs'],
