@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { DeclaredScope, Spec } from './types'
+import type { DeclaredScope, Spec, SpecVisibility } from './types'
 
 /** Resolves the `?person_id=` the Launchpad's "launch this app" link carries (see
  * conways-depot's LaunchpadPage.tsx) to a display name, so a new spec's author fills in on its
@@ -16,10 +16,19 @@ export function usePersonName(personId: string | null) {
   })
 }
 
-export function useSpecs() {
+/** Two filtered views, matching the workbench's "My workbench" / "Public" toggle — see backend
+ * routes/specs.py's list_specs for the exact filter semantics. Passing neither returns
+ * everything (used nowhere in the UI directly, just the natural fallback). The query key is
+ * `['specs', filter]`, still prefixed by plain `['specs']`, so useInvalidateSpecs below
+ * invalidates every filtered view at once without needing to know which ones exist. */
+export function useSpecs(filter: { person_id?: string; visibility?: string } = {}) {
+  const params = new URLSearchParams()
+  if (filter.person_id) params.set('person_id', filter.person_id)
+  if (filter.visibility) params.set('visibility', filter.visibility)
+  const qs = params.toString()
   return useQuery({
-    queryKey: ['specs'],
-    queryFn: () => api.get<Spec[]>('/specs'),
+    queryKey: ['specs', filter],
+    queryFn: () => api.get<Spec[]>(`/specs${qs ? `?${qs}` : ''}`),
   })
 }
 
@@ -42,7 +51,15 @@ function useInvalidateSpecs(id?: string) {
 export function useCreateSpec() {
   const invalidate = useInvalidateSpecs()
   return useMutation({
-    mutationFn: (data: { created_by?: string }) => api.post<Spec>('/specs', data),
+    mutationFn: (data: { created_by?: string; person_id?: string }) => api.post<Spec>('/specs', data),
+    onSuccess: invalidate,
+  })
+}
+
+export function useUpdateVisibility(id: string) {
+  const invalidate = useInvalidateSpecs(id)
+  return useMutation({
+    mutationFn: (visibility: SpecVisibility) => api.put<Spec>(`/specs/${id}/visibility`, { visibility }),
     onSuccess: invalidate,
   })
 }

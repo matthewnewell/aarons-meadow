@@ -32,7 +32,10 @@ def _set_sqlite_pragma(dbapi_conn, connection_record):
     cursor.close()
 
 
-_MIGRATIONS: list[tuple[str, str, str]] = []
+_MIGRATIONS: list[tuple[str, str, str]] = [
+    ("spec", "person_id", "ALTER TABLE spec ADD COLUMN person_id VARCHAR(36)"),
+    ("spec", "visibility", "ALTER TABLE spec ADD COLUMN visibility VARCHAR(10) NOT NULL DEFAULT 'private'"),
+]
 
 
 def _run_migrations(app):

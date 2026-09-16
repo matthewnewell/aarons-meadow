@@ -42,6 +42,42 @@ def test_create_spec(client):
     assert spec["title"] is None
 
 
+def test_new_spec_has_no_owner_and_is_private_by_default(client):
+    spec = client.post("/api/specs", json={}).get_json()
+    assert spec["person_id"] is None
+    assert spec["visibility"] == "private"
+
+
+def test_create_spec_with_a_person_id_sets_ownership(client):
+    spec = client.post("/api/specs", json={"person_id": "person-abc"}).get_json()
+    assert spec["person_id"] == "person-abc"
+
+
+def test_list_filters_by_person_id_regardless_of_visibility(client):
+    mine = client.post("/api/specs", json={"person_id": "person-abc"}).get_json()
+    client.post("/api/specs", json={"person_id": "person-xyz"}).get_json()
+
+    res = client.get("/api/specs?person_id=person-abc")
+    ids = [s["id"] for s in res.get_json()]
+    assert ids == [mine["id"]]
+
+
+def test_list_filters_by_public_visibility_across_owners(client):
+    mine = client.post("/api/specs", json={"person_id": "person-abc"}).get_json()
+    client.put(f"/api/specs/{mine['id']}/visibility", json={"visibility": "public"})
+    client.post("/api/specs", json={"person_id": "person-xyz"}).get_json()  # stays private
+
+    res = client.get("/api/specs?visibility=public")
+    ids = [s["id"] for s in res.get_json()]
+    assert ids == [mine["id"]]
+
+
+def test_visibility_rejects_an_invalid_value(client):
+    spec = client.post("/api/specs", json={}).get_json()
+    res = client.put(f"/api/specs/{spec['id']}/visibility", json={"visibility": "everyone"})
+    assert res.status_code == 400
+
+
 def test_chat_reports_ai_not_configured(client):
     created = client.post("/api/specs", json={}).get_json()
     res = client.post(f"/api/specs/{created['id']}/chat", json={"message": "I want an app"})

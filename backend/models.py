@@ -10,7 +10,10 @@ here: a published spec doesn't spin off a Depot Application of its own, it's jus
 app's own workbench (`/specs/<id>`) — a plain URL is the whole mechanism if a Depot project ever
 wants to point at one specific spec, same "a link is a pointer, never a new catalog entry"
 convention every sibling app already runs on for its own cross-references. No auth: like every
-other app's journal, "who" is a free-text name the browser remembers, not a real account.
+other app's journal, `created_by` is a free-text name the browser remembers, not a real account
+— `person_id` (below) is the real Depot persona id when one is known (via the `?person_id=` the
+Launchpad's launch link carries), used for ownership/filtering; both can be null (opened
+standalone, no persona to resolve), in which case a spec just has no owner rather than a fake one.
 """
 
 import json
@@ -32,6 +35,13 @@ STATUSES = ("draft", "in_review", "published")
 # anywhere (see this module's own docstring on why a published spec stays here, not the Depot).
 DECLARED_SCOPES = ("project", "organizational", "general")
 
+# private = only the owner's own "My workbench" view shows it; public = anyone can find it under
+# "Public" too — the whole point being someone can invite review on a still-in-progress draft,
+# not just a finished spec. Defaults to private: a spec starts as yours alone, you choose to
+# open it up. A spec with no owner (person_id null) can still be made public — there's just no
+# "My workbench" it will ever show up in.
+VISIBILITIES = ("private", "public")
+
 
 class Spec(db.Model):
     __tablename__ = "spec"
@@ -40,6 +50,8 @@ class Spec(db.Model):
     title = db.Column(db.String(300), nullable=True)  # set once the interview names it
     status = db.Column(db.String(20), nullable=False, default="draft")
     created_by = db.Column(db.String(120), nullable=True)
+    person_id = db.Column(db.String(36), nullable=True)  # the real owner — see module docstring
+    visibility = db.Column(db.String(10), nullable=False, default="private")  # see VISIBILITIES
     created_at = db.Column(db.DateTime, default=_now, nullable=False)
     updated_at = db.Column(db.DateTime, default=_now, onupdate=_now, nullable=False)
 
@@ -84,6 +96,8 @@ class Spec(db.Model):
             "title": self.title,
             "status": self.status,
             "created_by": self.created_by,
+            "person_id": self.person_id,
+            "visibility": self.visibility,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "messages": self.message_list,

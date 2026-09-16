@@ -14,9 +14,34 @@
 }
 
 .workbench-page__title {
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 1.4rem;
   font-weight: 800;
+}
+
+.workbench-page__tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  width: fit-content;
+}
+
+.workbench-page__tab {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-faint);
+}
+
+.workbench-page__tab--active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
 }
 
 .workbench-page__new {
@@ -78,15 +103,10 @@
 }
 
 .spec-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px;
+  position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  text-decoration: none;
-  color: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -95,9 +115,54 @@
   box-shadow: var(--shadow-sm);
 }
 
+.spec-card__link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.spec-card__visibility-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-faint);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+.spec-card__visibility-toggle:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.spec-card__visibility-toggle--public {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.spec-card__visibility {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
 .spec-card__title {
   font-weight: 700;
   font-size: 0.92rem;
+  padding-right: 56px; /* clears the visibility toggle/badge pinned to the card's top-right */
 }
 
 .spec-card__desc {

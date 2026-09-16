@@ -5,6 +5,12 @@ export const STATUS_LABEL: Record<SpecStatus, string> = {
   published: 'Published',
 }
 
+export type SpecVisibility = 'private' | 'public'
+export const VISIBILITY_LABEL: Record<SpecVisibility, string> = {
+  private: 'Private',
+  public: 'Public',
+}
+
 export type DeclaredScope = 'project' | 'organizational' | 'general'
 export const DECLARED_SCOPES: DeclaredScope[] = ['project', 'organizational', 'general']
 export const DECLARED_SCOPE_LABEL: Record<DeclaredScope, string> = {
@@ -23,6 +29,8 @@ export interface Spec {
   title: string | null
   status: SpecStatus
   created_by: string | null
+  person_id: string | null
+  visibility: SpecVisibility
   created_at: string
   updated_at: string
   messages: ChatMessage[]

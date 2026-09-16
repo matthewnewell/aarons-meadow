@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 
 import ai_client
 from db import db
-from models import DECLARED_SCOPES, Spec
+from models import DECLARED_SCOPES, VISIBILITIES, Spec
 
 bp = Blueprint("specs", __name__, url_prefix="/api/specs")
 
@@ -56,17 +56,50 @@ def _build_context(spec: Spec) -> str:
 
 @bp.get("")
 def list_specs():
-    specs = Spec.query.order_by(Spec.updated_at.desc()).all()
+    """Two filtered views, matching the workbench's own "My workbench" / "Public" toggle —
+    ?person_id= is everything a specific person owns, any status or visibility (it's all yours
+    either way); ?visibility=public is every public spec regardless of who owns it (including
+    your own). Neither param given returns everything unfiltered — the direct-API/no-identity
+    fallback; there's no real access control here to enforce either way (see models.py's own
+    "no auth" note), this is a filtering convenience, not a security boundary."""
+    q = Spec.query
+    person_id = request.args.get("person_id")
+    visibility = request.args.get("visibility")
+    if person_id:
+        q = q.filter(Spec.person_id == person_id)
+    elif visibility:
+        q = q.filter(Spec.visibility == visibility)
+    specs = q.order_by(Spec.updated_at.desc()).all()
     return jsonify([s.to_dict() for s in specs])
 
 
 @bp.post("")
 def create_spec():
     body = request.get_json(force=True) or {}
-    spec = Spec(created_by=(body.get("created_by") or "").strip() or None)
+    spec = Spec(
+        created_by=(body.get("created_by") or "").strip() or None,
+        person_id=body.get("person_id") or None,
+    )
     db.session.add(spec)
     db.session.commit()
     return jsonify(spec.to_dict()), 201
+
+
+@bp.put("/<spec_id>/visibility")
+def update_visibility(spec_id):
+    """Flip private/public — the whole point of the split being that a still-in-progress draft
+    can be opened up for review, not just a finished one. No ownership check enforced (no real
+    auth anywhere in this app); the frontend only renders the control for a spec's own owner,
+    same "signposting, not enforcement" restraint the rest of this ecosystem uses for admin-only
+    controls."""
+    spec = Spec.query.get_or_404(spec_id)
+    body = request.get_json(force=True) or {}
+    visibility = body.get("visibility")
+    if visibility not in VISIBILITIES:
+        return jsonify({"error": f"visibility must be one of {VISIBILITIES}"}), 400
+    spec.visibility = visibility
+    db.session.commit()
+    return jsonify(spec.to_dict())
 
 
 @bp.get("/<spec_id>")

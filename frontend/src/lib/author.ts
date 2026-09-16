@@ -1,10 +1,13 @@
-// No auth here, same as every sibling app's journal — "who" is just a name. Two sources, in
-// order of preference: the Depot persona a "?person_id=" query param points at (see
-// hooks.ts's usePersonName — resolved once, remembered here so it survives client-side
-// navigation and future visits) and, failing that, whatever name was remembered last time.
-// Ported from Value Stream's / WinMax's lib/journal.ts, extended with the persona lookup.
+// No auth here, same as every sibling app's journal — "who" is just a name, plus (unlike a
+// plain journal) a real Depot persona id when one's known, since specs now have real ownership
+// (person_id — see models.py) that "My workbench" filters by. Two sources for each, in order of
+// preference: the Depot persona a "?person_id=" query param points at (see hooks.ts's
+// usePersonName — resolved once, remembered here so both survive client-side navigation, which
+// drops the query param, and future visits) and, failing that, whatever was remembered last
+// time. Ported from Value Stream's / WinMax's lib/journal.ts, extended with the persona lookup.
 
 const AUTHOR_KEY = 'am:author'
+const PERSON_ID_KEY = 'am:person_id'
 
 export function getAuthor(): string {
   try {
@@ -20,6 +23,22 @@ export function setAuthor(name: string): void {
     if (trimmed) localStorage.setItem(AUTHOR_KEY, trimmed)
   } catch {
     // private window / storage blocked — specs just get created without an author
+  }
+}
+
+export function getPersonId(): string | null {
+  try {
+    return localStorage.getItem(PERSON_ID_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function setPersonId(id: string): void {
+  try {
+    localStorage.setItem(PERSON_ID_KEY, id)
+  } catch {
+    // private window / storage blocked — no "My workbench" across visits, same degrade as author
   }
 }
 
