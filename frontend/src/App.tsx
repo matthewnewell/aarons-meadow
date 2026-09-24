@@ -1,4 +1,3 @@
-import { DepotBackBar } from '@conways/drawer'
 import { Route, Routes } from 'react-router-dom'
 import Nav from './components/Nav'
 import SpecPage from './pages/SpecPage'
@@ -18,7 +17,6 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <>
-      <DepotBackBar />
       <Routes>
       <Route path="/about" element={<SplashPage />} />
       <Route path="/" element={<Layout><WorkbenchPage /></Layout>} />

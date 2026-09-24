@@ -1,3 +1,5 @@
+import { currentPersonId } from '@conways/drawer'
+
 // No auth here, same as every sibling app's journal — "who" is just a name, plus (unlike a
 // plain journal) a real Depot persona id when one's known, since specs now have real ownership
 // (person_id — see models.py) that "My workbench" filters by. Two sources for each, in order of
@@ -26,7 +28,10 @@ export function setAuthor(name: string): void {
   }
 }
 
+/** The ecosystem's "viewing as" persona (the header's user menu), else the last one remembered here. */
 export function getPersonId(): string | null {
+  const shared = currentPersonId()
+  if (shared) return shared
   try {
     return localStorage.getItem(PERSON_ID_KEY)
   } catch {
